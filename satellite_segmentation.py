@@ -1,8 +1,9 @@
 from keras.models import Model
-from keras.layers import Input, merge, Convolution2D, MaxPooling2D, UpSampling2D, Flatten, Dense, Activation, Reshape, Permute, Deconvolution2D, ZeroPadding2D
+from keras.layers import Input, merge, Conv2D, MaxPooling2D, UpSampling2D, Flatten, Dense, Activation, Reshape, Permute, Deconvolution2D, ZeroPadding2D
 from keras.layers.normalization import BatchNormalization
 from keras.optimizers import Adam, SGD, Adagrad
 from keras.callbacks import ModelCheckpoint, EarlyStopping
+from keras.metrics import binary_accuracy
 import numpy as np
 import os
 import sys
@@ -16,32 +17,32 @@ def make_convnet(image_rows,image_cols):
     inputs = Input((image_rows, image_cols, 3))
 
     # 3x3 convolution layer
-    x = Convolution2D(32, 3, 3, border_mode='valid', init='he_normal')(inputs)
+    x = Conv2D(32, (3, 3), padding='valid', kernel_initializer='he_normal')(inputs)
     x = BatchNormalization(axis=3)(x)
     x = Activation('relu')(x)
 
     # 3x3 convolution layer
-    x = Convolution2D(32, 3, 3, border_mode='valid', init='he_normal')(x)
+    x = Conv2D(32, (3, 3), padding='valid', kernel_initializer='he_normal')(x)
     x = BatchNormalization(axis=3)(x)
     x = Activation('relu')(x)
 
     # 3x3 convolution layer
-    x = Convolution2D(32, 3, 3, border_mode='valid', init='he_normal')(x)
+    x = Conv2D(32, (3, 3), padding='valid', kernel_initializer='he_normal')(x)
     x = BatchNormalization(axis=3)(x)
     x = Activation('relu')(x)
 
     # 1x1 convolution layer
     # This is essentially a per-pixel fully connected layer,
     # which makes this a "fully convolutional network"
-    x = Convolution2D(1, 1, 1, init='he_normal')(x)
+    x = Conv2D(1, (1, 1), kernel_initializer='he_normal')(x)
     
     # Sigmoid activation for binary classification
     x = Activation('sigmoid')(x)
 
-    model = Model(input=inputs, output=x)
+    model = Model(inputs=inputs, outputs=x)
 
     opt = Adagrad()
-    model.compile(optimizer=opt, loss=balanced_binary_crossentropy, metrics=['binary_accuracy','precision','recall'])
+    model.compile(optimizer=opt, loss=balanced_binary_crossentropy, metrics=[binary_accuracy])
 
     return model
 
@@ -68,7 +69,7 @@ def train_model():
         early_stopping = EarlyStopping(monitor='val_loss', min_delta=1e-5, patience=10, verbose=0, mode='auto')
         model.fit(X_train, y_train, 
                   validation_data=(X_val,y_val),
-                  batch_size=batch_size, nb_epoch=10, verbose=1, shuffle=True,
+                  batch_size=batch_size, epochs=10, verbose=1, shuffle=True,
                   callbacks=[model_checkpoint,early_stopping])
         model.save_weights(model_path)
 
