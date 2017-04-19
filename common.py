@@ -5,10 +5,10 @@ import cv2
 def balanced_binary_crossentropy(y_true, y_pred):
     """Binary crossentropy loss function with automatic class balancing"""
     y_true_f = K.cast(y_true,K.floatx())
-    num_pos = K.sum(y_true_f)
-    num_neg = K.sum(1-y_true_f)
+    num_pos = K.sum(y_true_f)+1
+    num_neg = K.sum(1-y_true_f)+1
     #weights = 1/(2*num_pos)*y_true + 1/(2*num_neg)*(1-y_true)
-    weights = (2*num_neg)/(2*num_pos)*y_true_f + (1-y_true_f)
+    weights = (num_neg)/(num_pos)*y_true_f + (1-y_true_f)
     score_array = K.binary_crossentropy(y_pred,y_true_f)
     score_array *= weights
     score_array /= K.mean(K.cast(K.not_equal(weights, 0), K.floatx()))
